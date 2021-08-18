@@ -391,6 +391,11 @@ class AtLookupImpl implements AtLookUp {
     if (privateKey == null) {
       throw UnAuthenticatedException('Private key not passed');
     }
+    // If _isPkamAuthenticated is true, connection is already authenticated.
+    // Do nothing.
+    if(_isPkamAuthenticated){
+      return true;
+    }
     await _sendCommand('from:$_currentAtSign\n');
     var fromResponse = await (messageListener.read());
     logger.finer('from result:$fromResponse');

@@ -35,7 +35,7 @@ class SyncMessageListener extends OutboundMessageListener {
         bytesBuilder.add(pendingData.removeFirst());
       }
       bytesBuilder.add(sync_data);
-      _process(bytesBuilder.takeBytes());
+      await _process(bytesBuilder.takeBytes());
       return;
     }
     // If sync_data contains '$',
@@ -55,9 +55,9 @@ class SyncMessageListener extends OutboundMessageListener {
       bytesBuilder
           .add(sync_data.sublist(0, sync_data.lastIndexOf(DOLLAR_UTF_CODE)));
       var incompleteData =
-      sync_data.sublist(sync_data.lastIndexOf(DOLLAR_UTF_CODE) + 1);
+          sync_data.sublist(sync_data.lastIndexOf(DOLLAR_UTF_CODE) + 1);
       pendingData.addLast(incompleteData);
-      _process(bytesBuilder.takeBytes());
+      await _process(bytesBuilder.takeBytes());
     }
     // If sync_data does not contain '$', incomplete data is received. Add to pendingData queue.
     if (!sync_data.contains(DOLLAR_UTF_CODE)) {
@@ -66,7 +66,7 @@ class SyncMessageListener extends OutboundMessageListener {
   }
 
   /// Decodes the bytes and sends syncCallBack
-  void _process(sync_records) {
+  Future<void> _process(sync_records) async {
     var startIndex = 0, endIndex = 0;
     var recordsReceived = utf8.decode(sync_records);
     while (startIndex < recordsReceived.length &&
@@ -74,12 +74,15 @@ class SyncMessageListener extends OutboundMessageListener {
       var startOfRecord = recordsReceived.indexOf(TILDE_SIGN, startIndex) + 1;
       if (startOfRecord == 0) break;
       var recordLengthStr =
-      recordsReceived.substring(startIndex, startOfRecord - 1);
+          recordsReceived.substring(startIndex, startOfRecord - 1);
       startIndex = startIndex + recordLengthStr.length + 1;
       endIndex = startIndex + int.parse(recordLengthStr);
       var jsonString = recordsReceived.substring(startIndex, endIndex);
       var jsonRecord = jsonDecode(jsonString);
-      syncCallback!(jsonRecord);
+      // SyncCallback sync the entry to local(atClient) keystore.
+      await syncCallback!(jsonRecord);
+      // onSyncSuccess callback checks if the sync process is completed.
+      await onSyncSuccess!();
       startIndex = endIndex + 1;
     }
   }

@@ -10,6 +10,7 @@ class OutboundMessageListener {
   late Queue _queue;
   final _connection;
   Function? syncCallback;
+  Function? onSyncSuccess;
 
   OutboundMessageListener(this._connection);
 

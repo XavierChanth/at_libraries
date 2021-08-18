@@ -8,6 +8,7 @@ class AtLookupSync extends AtLookupImpl {
   var _rootDomain;
   var _rootPort;
   Function? syncCallback;
+  Function? onSyncSuccess;
 
   AtLookupSync(
       String atSign,
@@ -38,6 +39,7 @@ class AtLookupSync extends AtLookupImpl {
       //3. listen to server response
       messageListener = SyncMessageListener(connection);
       messageListener.syncCallback = syncCallback;
+      messageListener.onSyncSuccess = onSyncSuccess;
       messageListener.listen();
     }
   }
